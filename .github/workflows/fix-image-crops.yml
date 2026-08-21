@@ -1,0 +1,32 @@
+name: Fix image crops
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.head_commit.message != 'Fix website image crops automatically'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Fix section image crop
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = '.split img{width:100%;height:520px;object-fit:cover;border-radius:28px}'
+          new = '.split img{width:100%;height:auto;max-height:520px;object-fit:contain;border-radius:28px;display:block;background:#fff}'
+          if old not in s:
+              raise SystemExit('split image CSS pattern not found')
+          p.write_text(s.replace(old, new))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix website image crops automatically'
+          git push
